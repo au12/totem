@@ -1,0 +1,28 @@
+services:
+  totem:
+    build: .
+    image: totem:latest
+    container_name: totem
+    ports:
+      - "8080:8080"
+    environment:
+      # The server starts as root only long enough to make /config writable,
+      # then runs as this user. Unraid: 99 / 100.
+      PUID: "1000"
+      PGID: "1000"
+      # Behind a reverse proxy (e.g. Nginx Proxy Manager), trust its
+      # X-Forwarded-For so the score rate limit is per player, not per proxy.
+      # TRUST_PROXY: "true"
+      # LEADERBOARD: "false"   # disable the shared high-score table
+      # LOG_REQUESTS: "true"
+    volumes:
+      # The table: "Totem (Gottlieb 1979).vpx" and, for the backglass,
+      # "Totem (Gottlieb 1979).directb2s". Subfolders are fine; the Media
+      # folder from the download is ignored.
+      - ./data:/data:ro
+      # Converted table (made on first start) and shared high scores.
+      - ./config:/config
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped

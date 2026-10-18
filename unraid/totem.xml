@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>totem</Name>
+  <Repository>ghcr.io/au12/totem:latest</Repository>
+  <Registry>https://github.com/au12/totem/pkgs/container/totem</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/au12/totem</Support>
+  <Project>https://github.com/au12/totem</Project>
+  <Overview>Gottlieb's Totem (1979) pinball in the browser, phone friendly. Put the Visual Pinball table (Totem (Gottlieb 1979).vpx) and its backglass (.directb2s) in the data folder; the table is converted for the web on first start.</Overview>
+  <Category>GameServers:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/au12/totem/main/web/public/icon-512.png</Icon>
+  <Config Name="Web UI" Target="8080" Default="8089" Mode="tcp" Description="Web port" Type="Port" Display="always" Required="true" Mask="false">8089</Config>
+  <Config Name="Table files" Target="/data" Default="/mnt/user/appdata/totem/data" Mode="ro" Description="Folder with Totem (Gottlieb 1979).vpx and .directb2s" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/totem/data</Config>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/totem/config" Mode="rw" Description="Converted table and high scores" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/totem/config</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+  <Config Name="Trust proxy" Target="TRUST_PROXY" Default="true" Mode="" Description="Use X-Forwarded-For from your reverse proxy for the score rate limit" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Leaderboard" Target="LEADERBOARD" Default="true" Mode="" Description="Shared high-score table" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+</Container>

@@ -1,0 +1,11 @@
+# Never send table files or local state into the build context.
+data
+config
+*.vpx
+*.directb2s
+**/node_modules
+web/dist
+web/dev-dist
+web/.cache
+.git
+.github

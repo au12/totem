@@ -1,0 +1,8 @@
+node_modules/
+web/dist/
+web/dev-dist/
+web/.cache/
+data/
+config/
+*.vpx
+*.directb2s
