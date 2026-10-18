@@ -27,6 +27,7 @@ import { Kicker } from '../vpx/vpt/kicker/kicker';
 import { Light } from '../vpx/vpt/light/light';
 import { Plunger } from '../vpx/vpt/plunger/plunger';
 import { Primitive } from '../vpx/vpt/primitive/primitive';
+import { PrimitiveState } from '../vpx/vpt/primitive/primitive-state';
 import { Ramp } from '../vpx/vpt/ramp/ramp';
 import { Rubber } from '../vpx/vpt/rubber/rubber';
 import { Spinner } from '../vpx/vpt/spinner/spinner';
@@ -37,6 +38,7 @@ import { createBallMaterial, createBallShadow } from './ball';
 import { decimate, meshToGeometry } from './geometry';
 import { Lightmap } from './lightmap';
 import { MaterialFactory } from './materials';
+import { Placement, PrimitiveTransform } from './primitive-transform';
 import { TextureStore } from './textures';
 import { UpdaterApi } from './updater-api';
 
@@ -53,6 +55,8 @@ interface DynamicItem {
 	item: any;
 	node: Group;
 	prev?: ItemState;
+	/** Animated primitives are placed by us rather than vpx-js's updater. */
+	transform?: PrimitiveTransform;
 }
 
 interface BallView {
@@ -185,7 +189,10 @@ export class TableView {
 						group.name = name;
 						group.matrixAutoUpdate = false;
 						this.root.add(group);
-						this.dynamics.set(name, { name, item, node: group });
+						const transform = item instanceof Primitive
+							? new PrimitiveTransform((item as unknown as { data: Placement }).data, this.table.getScaleZ())
+							: undefined;
+						this.dynamics.set(name, { name, item, node: group, transform });
 					}
 					const mesh = new Mesh(geometry, material);
 					mesh.name = info.mesh.name;
@@ -243,10 +250,25 @@ export class TableView {
 			if (d.prev && state.equals(d.prev)) {
 				continue;
 			}
-			try {
-				d.item.getUpdater().applyState(d.node, state, this.api, this.table);
-			} catch (err) {
-				// Updaters assume vpx-js's own node layout; ignore mismatches.
+			if (d.transform) {
+				const p = state as unknown as PrimitiveState;
+				d.node.visible = !!p.isVisible;
+				d.transform.matrix({
+					position: p.position,
+					size: p.size,
+					rotAndTra: [
+						p.rotation.x, p.rotation.y, p.rotation.z,
+						p.translation.x, p.translation.y, p.translation.z,
+						p.objectRotation.x, p.objectRotation.y, p.objectRotation.z,
+					],
+				}, d.node.matrix);
+				d.node.matrixWorldNeedsUpdate = true;
+			} else {
+				try {
+					d.item.getUpdater().applyState(d.node, state, this.api, this.table);
+				} catch (err) {
+					// Updaters assume vpx-js's own node layout; ignore mismatches.
+				}
 			}
 			d.prev?.release();
 			d.prev = state.clone();

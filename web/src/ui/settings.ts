@@ -33,6 +33,7 @@ const DEFAULTS = {
 		quality: 'auto',     // auto | high | low
 		fps: false,
 		tiltMeter: true,
+		brightness: 1,       // multiplies the table's exposure
 	},
 	audio: {
 		master: 0.85,

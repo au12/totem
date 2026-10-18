@@ -42,6 +42,8 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySe
 const $$ = <T extends HTMLElement = HTMLElement>(sel: string) => [...document.querySelectorAll(sel)] as T[];
 
 const MACHINE_KEY = 'totem.machine';
+/** Tone-mapping exposure for the table at the default brightness (was 1.05). */
+const TABLE_EXPOSURE = 0.78;
 
 class App {
 
@@ -166,7 +168,7 @@ class App {
 		});
 		renderer.outputColorSpace = SRGBColorSpace;
 		renderer.toneMapping = NeutralToneMapping;
-		renderer.toneMappingExposure = 1.05;
+		renderer.toneMappingExposure = this.tableExposure();
 		this.tableCanvas.addEventListener('webglcontextlost', e => {
 			e.preventDefault();
 			this.fail('The graphics stopped', '<p>Your browser reset its graphics. Reload the page to keep playing.</p>');
@@ -829,8 +831,17 @@ class App {
 
 	// --- settings -------------------------------------------------------------------
 
+	/** Table exposure: a slightly dim cabinet by default, adjustable in Display settings. */
+	private tableExposure(): number {
+		const b = Number(this.settings.get('display.brightness'));
+		return TABLE_EXPOSURE * (Number.isFinite(b) && b > 0 ? b : 1);
+	}
+
 	private applySettings(): void {
 		const s = this.settings;
+		if (this.renderer) {
+			this.renderer.toneMappingExposure = this.tableExposure();
+		}
 		this.input.setKeys(s.get('controls.keys'));
 		this.input.haptics = !!s.get('controls.haptics');
 		this.input.mouse = !!s.get('controls.mouse');
@@ -899,10 +910,10 @@ class App {
 			input.addEventListener('change', () => s.set(path, input.checked));
 			body.appendChild(f);
 		};
-		const slider = (label: string, path: string) => {
+		const slider = (label: string, path: string, range = { min: 0, max: 1, step: 0.05 }) => {
 			const f = document.createElement('label');
 			f.className = 'field';
-			f.innerHTML = `<span class="label">${label}</span><input type="range" min="0" max="1" step="0.05">`;
+			f.innerHTML = `<span class="label">${label}</span><input type="range" min="${range.min}" max="${range.max}" step="${range.step}">`;
 			const input = f.querySelector('input')!;
 			input.value = String(s.get(path));
 			input.addEventListener('input', () => s.set(path, Number(input.value)));
@@ -915,6 +926,7 @@ class App {
 			check('Pause when switching apps', 'game.pauseOnBlur');
 		} else if (tab === 'display') {
 			seg('Camera', 'display.view', [['auto', 'Auto'], ['cabinet', 'Cabinet'], ['high', 'Raised'], ['overhead', 'Overhead']], 'Auto picks the best angle for the screen shape.');
+			slider('Table brightness', 'display.brightness', { min: 0.6, max: 1.4, step: 0.05 });
 			seg('Backglass', 'display.backglass', [['auto', 'Auto'], ['show', 'Show'], ['hide', 'Hide']], 'Auto shows the backglass when the table still fits; otherwise scores appear in a strip above the table.');
 			seg('Quality', 'display.quality', [['auto', 'Auto'], ['high', 'High'], ['low', 'Low']], 'Low uses smaller textures and fewer pixels, for older phones. Reload to apply.');
 			check('Tilt meter', 'display.tiltMeter');

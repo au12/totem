@@ -86,107 +86,143 @@ export class PrimitiveApi extends ItemApi<PrimitiveData> {
 	set Y(v) { this.state.position.y = v; }
 	get Z() { return this.state.position.z; }
 	set Z(v) { this.state.position.z = v; }
-	get Size_X() { return this.data.size.x; } // TODO make sure it doesn't conflict with event callbacks
+	get Size_X() { return this.isDynamic ? this.state.size.x : this.data.size.x; }
 	set Size_X(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.size.x = v;
+		} else {
+			this.data.size.x = v;
 		}
-		this.data.size.x = v;
 	}
-	get Size_Y() { return this.data.size.y; }
+	get Size_Y() { return this.isDynamic ? this.state.size.y : this.data.size.y; }
 	set Size_Y(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.size.y = v;
+		} else {
+			this.data.size.y = v;
 		}
-		this.data.size.y = v;
 	}
-	get Size_Z() { return this.data.size.z; }
+	get Size_Z() { return this.isDynamic ? this.state.size.z : this.data.size.z; }
 	set Size_Z(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.size.z = v;
+		} else {
+			this.data.size.z = v;
 		}
-		this.data.size.z = v;
 	}
 	get RotAndTra0() { return this.RotX; }
 	set RotAndTra0(v) { this.RotX = v; }
-	get RotX() { return this.data.rotAndTra[0]; }
+	get RotX() { return this.isDynamic ? this.state.rotation.x : this.data.rotAndTra[0]; }
 	set RotX(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.rotation.x = v;
+		} else {
+			this.data.rotAndTra[0] = v;
 		}
-		this.data.rotAndTra[0] = v;
 	}
 	get RotAndTra1() { return this.RotY; }
 	set RotAndTra1(v) { this.RotY = v; }
-	get RotY() { return this.data.rotAndTra[1]; }
+	get RotY() { return this.isDynamic ? this.state.rotation.y : this.data.rotAndTra[1]; }
 	set RotY(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.rotation.y = v;
+		} else {
+			this.data.rotAndTra[1] = v;
 		}
-		this.data.rotAndTra[1] = v;
 	}
 	get RotAndTra2() { return this.RotZ; }
 	set RotAndTra2(v) { this.RotZ = v; }
-	get RotZ() { return this.data.rotAndTra[2]; }
+	get RotZ() { return this.isDynamic ? this.state.rotation.z : this.data.rotAndTra[2]; }
 	set RotZ(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.rotation.z = v;
+		} else {
+			this.data.rotAndTra[2] = v;
 		}
-		this.data.rotAndTra[2] = v;
 	}
 	get RotAndTra3() { return this.TransX; }
 	set RotAndTra3(v) { this.TransX = v; }
-	get TransX() { return this.data.rotAndTra[3]; }
+	get TransX() { return this.isDynamic ? this.state.translation.x : this.data.rotAndTra[3]; }
 	set TransX(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.translation.x = v;
+		} else {
+			this.data.rotAndTra[3] = v;
 		}
-		this.data.rotAndTra[3] = v;
 	}
 	get RotAndTra4() { return this.TransY; }
 	set RotAndTra4(v) { this.TransY = v; }
-	get TransY() { return this.data.rotAndTra[4]; }
+	get TransY() { return this.isDynamic ? this.state.translation.y : this.data.rotAndTra[4]; }
 	set TransY(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.translation.y = v;
+		} else {
+			this.data.rotAndTra[4] = v;
 		}
-		this.data.rotAndTra[4] = v;
 	}
 	get RotAndTra5() { return this.TransZ; }
 	set RotAndTra5(v) { this.TransZ = v; }
-	get TransZ() { return this.data.rotAndTra[5]; }
+	get TransZ() { return this.isDynamic ? this.state.translation.z : this.data.rotAndTra[5]; }
 	set TransZ(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.translation.z = v;
+		} else {
+			this.data.rotAndTra[5] = v;
 		}
-		this.data.rotAndTra[5] = v;
 	}
 	get RotAndTra6() { return this.ObjRotX; }
 	set RotAndTra6(v) { this.ObjRotX = v; }
-	get ObjRotX() { return this.data.rotAndTra[6]; }
+	get ObjRotX() { return this.isDynamic ? this.state.objectRotation.x : this.data.rotAndTra[6]; }
 	set ObjRotX(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.objectRotation.x = v;
+		} else {
+			this.data.rotAndTra[6] = v;
 		}
-		this.data.rotAndTra[6] = v;
 	}
 	get RotAndTra7() { return this.ObjRotY; }
 	set RotAndTra7(v) { this.ObjRotY = v; }
-	get ObjRotY() { return this.data.rotAndTra[7]; }
+	get ObjRotY() { return this.isDynamic ? this.state.objectRotation.y : this.data.rotAndTra[7]; }
 	set ObjRotY(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.objectRotation.y = v;
+		} else {
+			this.data.rotAndTra[7] = v;
 		}
-		this.data.rotAndTra[7] = v;
 	}
 	get RotAndTra8() { return this.ObjRotZ; }
 	set RotAndTra8(v) { this.ObjRotZ = v; }
-	get ObjRotZ() { return this.data.rotAndTra[8]; }
+	get ObjRotZ() { return this.isDynamic ? this.state.objectRotation.z : this.data.rotAndTra[8]; }
 	set ObjRotZ(v) {
+		// Totem web: keep the data at its original value; the updater draws
+		// the difference between the state and the data.
 		if (this.isDynamic) {
 			this.state.objectRotation.z = v;
+		} else {
+			this.data.rotAndTra[8] = v;
 		}
-		this.data.rotAndTra[8] = v;
 	}
 	get EdgeFactorUI() { return this.data.edgeFactorUI; }
 	set EdgeFactorUI(v) { this.data.edgeFactorUI = v; }

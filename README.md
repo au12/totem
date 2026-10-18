@@ -36,6 +36,8 @@ The converted table goes to `/config/packs/` and is rebuilt automatically if the
 
 The game keeps the screen awake while you play and pauses itself when you switch apps. Tall phones show the score in a display strip above the table; with room to spare (tablets, landscape, desktop) the full backglass is shown beside or above it.
 
+If the table looks too bright or too dark on a particular screen, adjust **Settings → Display → Table brightness**.
+
 Sound starts with the first tap. On an iPhone, web pages are silent while the ring/silent switch is set to silent.
 
 Served over HTTPS (for example behind Nginx Proxy Manager), the site is installable: in Safari use **Share → Add to Home Screen**, in Chrome **Install app**. It then opens full screen without the browser bars, and the table is cached for offline play.
