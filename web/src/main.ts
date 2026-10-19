@@ -12,7 +12,7 @@ import { AudioEngine } from './audio/audio';
 import { LoadedPack, loadPack, Quality } from './engine/pack';
 import { LAMP_BALL_IN_PLAY } from './game/hardware';
 import { DEFAULT_RULES, PersistentState, RulesSettings } from './game/totem-rules';
-import { VIEWS, ViewSpec } from './render/camera';
+import { projectedAspect, VIEWS, ViewSpec } from './render/camera';
 import { Backglass } from './ui/backglass';
 import { Command, Input, keyName } from './ui/input';
 import { formatScore, Scores } from './ui/scores';
@@ -778,13 +778,17 @@ class App {
 					tRect = { x: 0, y: h, w: vw, h: vh - h };
 				}
 			} else {
+				// Landscape: the table on the left, as tall as the screen; the
+				// backglass gets the width that is left, on the right.
 				const fullW = vh * bgAspect;
-				const room = vw - vh * 0.6;
-				const w = pref === 'show' ? Math.min(fullW, vw * 0.6) : Math.min(fullW, room);
+				const tableW = Math.min(vw * 0.7, vh * this.tableAspect(vw, vh));
+				const room = vw - tableW;
+				const w = pref === 'show' ? Math.min(fullW, Math.max(room, vw * 0.5)) : Math.min(fullW, room);
 				if (w >= 160) {
 					const h = w / bgAspect;
-					bgRect = { x: 0, y: (vh - h) / 2, w, h };
-					tRect = { x: w, y: 0, w: vw - w, h: vh };
+					const tw = Math.min(tableW, vw - w);
+					bgRect = { x: tw + (vw - tw - w) / 2, y: (vh - h) / 2, w, h };
+					tRect = { x: 0, y: 0, w: tw, h: vh };
 				}
 			}
 		}
@@ -801,6 +805,13 @@ class App {
 		root.setProperty('--ty', tRect.y + 'px');
 		root.setProperty('--tw', tRect.w + 'px');
 		root.setProperty('--th', tRect.h + 'px');
+		// The play controls: over the table, except beside a landscape table,
+		// where they use the whole screen so Launch sits clear of the plunger.
+		const hRect = this.showBackglass && !portrait ? { x: 0, y: 0, w: vw, h: vh } : tRect;
+		root.setProperty('--hx', hRect.x + 'px');
+		root.setProperty('--hy', hRect.y + 'px');
+		root.setProperty('--hw', hRect.w + 'px');
+		root.setProperty('--hh', hRect.h + 'px');
 		$('#strip').hidden = this.showBackglass;
 		if (!this.showBackglass) {
 			requestAnimationFrame(() => this.strip.resize(dpr));
@@ -812,15 +823,34 @@ class App {
 		}
 	}
 
-	private viewSpec(w: number, h: number): ViewSpec {
-		const v = this.settings.get<string>('display.view');
-		let spec: ViewSpec;
-		if (v !== 'auto' && VIEWS[v]) {
-			spec = { ...VIEWS[v] };
-		} else {
-			const aspect = w / h;
-			spec = { ...(aspect < 0.58 ? VIEWS.high : VIEWS.cabinet) };
+	/** On-screen width / height of the table for the view a landscape screen gets. */
+	private tableAspect(vw: number, vh: number): number {
+		const spec = this.baseViewSpec(vw * 0.6, vh, true);
+		const key = JSON.stringify(spec);
+		if (key !== this.aspectKey) {
+			const dim = this.pack?.table.getDimensions();
+			this.aspectCache = dim ? projectedAspect(dim.width, dim.height, spec) : 0.8;
+			this.aspectKey = dim ? key : '';
 		}
+		return this.aspectCache;
+	}
+
+	private aspectKey = '';
+	private aspectCache = 0.8;
+
+	private baseViewSpec(w: number, h: number, landscape: boolean): ViewSpec {
+		const v = this.settings.get<string>('display.view');
+		if (v !== 'auto' && VIEWS[v]) {
+			return { ...VIEWS[v] };
+		}
+		if (landscape) {
+			return { ...VIEWS.wide };
+		}
+		return { ...(w / h < 0.58 ? VIEWS.high : VIEWS.cabinet) };
+	}
+
+	private viewSpec(w: number, h: number): ViewSpec {
+		const spec = this.baseViewSpec(w, h, window.innerWidth > window.innerHeight);
 		// Leave room for the score strip and the menu button.
 		if (!this.showBackglass) {
 			spec.margin = Math.max(spec.margin, 0.02);

@@ -12,7 +12,7 @@ import { Sim } from '../engine/sim';
 import { Solenoid } from '../game/hardware';
 import { DEFAULT_RULES, PersistentState, RulesEvents, RulesSettings, SW, TotemRules } from '../game/totem-rules';
 import { TOTEM_DYNAMIC_ITEMS, TOTEM_HIDDEN_ITEMS, TotemTable } from '../game/totem-table';
-import { frameTable, ViewSpec } from '../render/camera';
+import { frameTable, TABLE_BOX, ViewSpec } from '../render/camera';
 import { TableView } from '../render/table-view';
 import { Backglass } from '../ui/backglass';
 
@@ -74,7 +74,7 @@ export class GameSession {
 		this.viewSpec = spec;
 		this.width = Math.max(1, width);
 		this.height = Math.max(1, height);
-		frameTable(this.camera, this.dim.width, this.dim.height, this.width / this.height, spec, { minY: 0, maxY: 70 });
+		frameTable(this.camera, this.dim.width, this.dim.height, this.width / this.height, spec, TABLE_BOX);
 		this.baseCamPos = this.camera.position.clone();
 	}
 

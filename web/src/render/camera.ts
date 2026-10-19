@@ -26,7 +26,39 @@ export const VIEWS: { [key: string]: ViewSpec } = {
 	cabinet: { pitch: 52, fov: 30, margin: 0.015 },
 	high: { pitch: 68, fov: 24, margin: 0.015, crop: { left: 0.01, right: 0.99, top: 0, bottom: 0.965 } },
 	overhead: { pitch: 89.5, fov: 16, margin: 0.01 },
+	// Landscape screens: the table fills the height. A lower angle foreshortens
+	// it to suit a short, wide screen; the long lens keeps the far end from
+	// shrinking; the crop trims the cabinet top and side rails so the
+	// playfield itself is as big as possible.
+	wide: { pitch: 40, fov: 14, margin: 0.004, crop: { left: 0.035, right: 0.97, top: 0.06, bottom: 0.965 } },
 };
+
+/** The box framed around the table: the playfield plus the height of its posts. */
+export const TABLE_BOX = { minY: 0, maxY: 70 };
+
+/**
+ * Width / height of the framed table on screen for a view, so a layout can
+ * size the table's area before placing the camera.
+ */
+export function projectedAspect(width: number, height: number, spec: ViewSpec, box = TABLE_BOX): number {
+	const camera = new PerspectiveCamera();
+	const aspect = 4; // wide enough that the fit is set by the height
+	frameTable(camera, width, height, aspect, { ...spec, margin: 0, zoom: 1, offsetY: 0 }, box);
+	const crop = spec.crop ?? { left: 0, right: 1, top: 0, bottom: 1 };
+	let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+	for (const x of [width * crop.left, width * crop.right]) {
+		for (const z of [height * crop.top, height * crop.bottom]) {
+			for (const y of [box.minY, box.maxY]) {
+				tmp.set(x, y, z).project(camera);
+				minX = Math.min(minX, tmp.x);
+				maxX = Math.max(maxX, tmp.x);
+				minY = Math.min(minY, tmp.y);
+				maxY = Math.max(maxY, tmp.y);
+			}
+		}
+	}
+	return (maxX - minX) / (maxY - minY) * aspect;
+}
 
 const tmp = new Vector3();
 

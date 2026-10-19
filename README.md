@@ -34,7 +34,7 @@ The converted table goes to `/config/packs/` and is rebuilt automatically if the
 - **Nudge**: the Nudge button at the top right. Bump too often and the machine tilts, which costs the ball in play (as on the real game).
 - **Menu**: the button at the top left pauses.
 
-The game keeps the screen awake while you play and pauses itself when you switch apps. Tall phones show the score in a display strip above the table; with room to spare (tablets, landscape, desktop) the full backglass is shown beside or above it.
+The game keeps the screen awake while you play and pauses itself when you switch apps. Tall phones show the score in a display strip above the table; on a computer or a sideways phone or tablet, the table fills the height of the screen on the left (a lower, cropped view that makes the most of a wide screen) with the backglass on the right.
 
 If the table looks too bright or too dark on a particular screen, adjust **Settings → Display → Table brightness**.
 

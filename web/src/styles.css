@@ -62,7 +62,7 @@ button { cursor: pointer; }
 
 #hud {
   position: absolute;
-  left: var(--tx); top: var(--ty); width: var(--tw); height: var(--th);
+  left: var(--hx); top: var(--hy); width: var(--hw); height: var(--hh);
   pointer-events: none;
 }
 #hud > * { pointer-events: auto; }
@@ -180,7 +180,7 @@ button { cursor: pointer; }
 
 #callout {
   position: absolute;
-  left: 50%;
+  left: calc(var(--tx) + var(--tw) / 2);
   top: calc(var(--ty) + var(--safe-t) + 64px);
   transform: translateX(-50%);
   pointer-events: none;
@@ -353,6 +353,13 @@ button { cursor: pointer; }
   white-space: nowrap;
 }
 .icon-btn svg { width: 18px; height: 18px; flex: none; }
+/* Narrow cards (a phone held sideways): keep the three labels on one line. */
+.card { container-type: inline-size; }
+@container (max-width: 360px) {
+  .toolbar { gap: 2px; }
+  .icon-btn { font-size: 12px; gap: 4px; padding: 8px 2px; }
+  .icon-btn svg { width: 15px; height: 15px; }
+}
 
 .meter { height: 10px; border: 2px solid var(--frame); border-radius: 5px; overflow: hidden; }
 .meter i { display: block; height: 100%; width: 0%; background: var(--stripe); transition: width 0.2s; }
