@@ -32,6 +32,8 @@ export interface Hardware {
 	sound(cue: SoundCue): void;
 	/** Balls currently on the playfield, in the shooter lane or held in the hole. */
 	ballsOnTable(): number;
+	/** Takes every ball off the table (the game in progress was abandoned). */
+	clearTable(): void;
 }
 
 /** Backglass lamps (numbering follows the original lamp list). */

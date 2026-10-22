@@ -55,6 +55,8 @@ export class TotemTable implements Hardware {
 	private flipLeft = false;
 	private flipRight = false;
 	private listener?: SwitchListener;
+	/** Bumped by clearTable(), so callbacks from an abandoned game are dropped. */
+	private generation = 0;
 	private display?: DisplaySink;
 	private variMax = -1;
 	private variScored = false;
@@ -152,6 +154,21 @@ export class TotemTable implements Hardware {
 
 	public ballsOnTable(): number {
 		return this.sim.balls.length;
+	}
+
+	public clearTable(): void {
+		// Drains already in flight belong to the old game.
+		this.generation++;
+		// Kickers keep a reference to the ball they hold; let them release it.
+		for (const name of ['sw41', 'BallRelease', 'Drain']) {
+			this.t.kickers[name]?.getApi().DestroyBall();
+		}
+		for (const ball of [...this.sim.balls]) {
+			this.sim.player.destroyBall(ball);
+		}
+		this.flipper('left', false);
+		this.flipper('right', false);
+		this.plunger(false);
 	}
 
 	// --- player controls --------------------------------------------------------
@@ -336,7 +353,12 @@ export class TotemTable implements Hardware {
 			const api = drain.getApi();
 			api.DestroyBall();
 			// Let the physics finish this step before the rules react.
-			this.sim.after(0, () => this.listener?.drained());
+			const generation = this.generation;
+			this.sim.after(0, () => {
+				if (generation === this.generation) {
+					this.listener?.drained();
+				}
+			});
 		});
 
 		// Vari-target: 21 triggers along the left lane track how far the ball
@@ -424,6 +446,11 @@ export class TotemTable implements Hardware {
 	private serveBall(): void {
 		const k = this.t.kickers.BallRelease;
 		if (!k) {
+			return;
+		}
+		if (this.sim.balls.length > 0) {
+			// Totem is a one-ball game: the trough never feeds a second ball.
+			console.warn('ball release skipped: a ball is already on the table');
 			return;
 		}
 		const api = k.getApi();

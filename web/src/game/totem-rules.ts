@@ -161,6 +161,8 @@ export class TotemRules {
 	private attractStep = 0;
 	private hstdShowTimer?: number;
 	private readonly lamps = new Map<number, LampState>();
+	/** Bumped whenever a game begins or is abandoned; see later(). */
+	private epoch = 0;
 	private endingTimers: number[] = [];
 
 	constructor(
@@ -194,8 +196,10 @@ export class TotemRules {
 
 	/** Abandons the game in progress (menu "restart"/"quit"). */
 	public abort(): void {
+		this.epoch++;
 		this.cancelTimers();
 		this.queue.length = 0;
+		this.hw.clearTable();
 		this.mode = 'attract';
 		this.enterAttract();
 	}
@@ -227,7 +231,7 @@ export class TotemRules {
 		if (this.tilted) {
 			// Physical things still happen while tilted: the hole kicks the ball out.
 			if (sw === SW.HOLE) {
-				this.hw.after(400, () => this.hw.fire('hole'));
+				this.later(400, () => this.hw.fire('hole'));
 			}
 			return;
 		}
@@ -327,7 +331,7 @@ export class TotemRules {
 		}
 		if (!this.ballInPlay && !this.tilted && this.hw.ballsOnTable() === 0) {
 			// A ball that never scored (e.g. weak plunge falling back) is served again.
-			this.hw.after(500, () => this.hw.fire('outhole'));
+			this.later(500, () => this.hw.fire('outhole'));
 			return;
 		}
 		if (this.hw.ballsOnTable() > 0) {
@@ -354,7 +358,9 @@ export class TotemRules {
 	// --- game flow ------------------------------------------------------------
 
 	private beginGame(players: number): void {
+		this.epoch++;
 		this.cancelTimers();
+		this.hw.clearTable();
 		this.mode = 'game';
 		this.players = [];
 		for (let i = 0; i < players; i++) {
@@ -397,7 +403,7 @@ export class TotemRules {
 		this.hw.setFlippers(true);
 		this.hw.sound('ballStart');
 		this.events.onBallStart?.(this.current, this.ball);
-		this.hw.after(300, () => this.hw.fire('outhole'));
+		this.later(300, () => this.hw.fire('outhole'));
 	}
 
 	private endBall(): void {
@@ -425,7 +431,7 @@ export class TotemRules {
 		};
 		this.whenQueueEmpty(() => {
 			if (this.tilted) {
-				this.hw.after(800, afterBonus);
+				this.later(800, afterBonus);
 			} else {
 				this.countBonus(afterBonus);
 			}
@@ -435,16 +441,16 @@ export class TotemRules {
 	private countBonus(done: () => void): void {
 		const step = () => {
 			if (this.bonus <= 0) {
-				this.hw.after(400, done);
+				this.later(400, done);
 				return;
 			}
 			this.bonus--;
 			this.addPoints(1000 * this.multiplier);
 			this.hw.sound('bonusTick');
 			this.updateBonusLamps();
-			this.hw.after(this.multiplier > 1 ? 160 : 120, step);
+			this.later(this.multiplier > 1 ? 160 : 120, step);
 		};
-		this.hw.after(500, step);
+		this.later(500, step);
 	}
 
 	private gameOver(): void {
@@ -486,10 +492,10 @@ export class TotemRules {
 		this.events.onPersist?.(this.persistent);
 		let t = 900;
 		for (const s of steps) {
-			this.endingTimers.push(this.hw.after(t, s));
+			this.endingTimers.push(this.later(t, s));
 			t += 450;
 		}
-		this.endingTimers.push(this.hw.after(t + 300, () => {
+		this.endingTimers.push(this.later(t + 300, () => {
 			this.events.onPersist?.(this.persistent);
 			this.events.onGameOver?.(scores, hstdBeaten);
 			this.enterAttract();
@@ -540,7 +546,7 @@ export class TotemRules {
 			}
 			this.checkSpecial();
 			this.resettingDrops = true;
-			this.hw.after(900, () => this.resetDropTargets(true));
+			this.later(900, () => this.resetDropTargets(true));
 		}
 		this.updateLamps();
 	}
@@ -606,7 +612,7 @@ export class TotemRules {
 			this.events.onCallout?.(`Bonus scored: ${amount.toLocaleString('en-US')}`);
 			const total = this.bonus;
 			for (let i = 0; i < total; i++) {
-				this.hw.after(delay + i * 110, () => {
+				this.later(delay + i * 110, () => {
 					this.bonus = Math.max(0, this.bonus - 1);
 					this.addPoints(1000 * this.multiplier);
 					this.hw.sound('bonusTick');
@@ -616,7 +622,7 @@ export class TotemRules {
 			delay += total * 110 + 300;
 		}
 		this.updateLamps();
-		this.hw.after(delay + 500, () => {
+		this.later(delay + 500, () => {
 			this.holeBusy = false;
 			this.hw.fire('hole');
 		});
@@ -692,7 +698,7 @@ export class TotemRules {
 		this.addPoints(unit);
 		this.hw.sound(unit >= 1000 ? 'tone1000' : unit >= 100 ? 'tone100' : 'tone10');
 		const gap = unit >= 1000 ? 95 : unit >= 100 ? 70 : 40;
-		this.queueTimer = this.hw.after(gap, () => {
+		this.queueTimer = this.later(gap, () => {
 			this.queueTimer = undefined;
 			this.pumpQueue();
 			if (!this.queue.length) {
@@ -849,6 +855,20 @@ export class TotemRules {
 	}
 
 	// --- helpers ------------------------------------------------------------------
+
+	/**
+	 * A delayed step of the game in progress. Steps scheduled by a game that
+	 * has since been abandoned (restart, quit) are dropped, so nothing from it
+	 * (a ball serve, a bonus count) can act in the next game.
+	 */
+	private later(ms: number, fn: () => void): number {
+		const epoch = this.epoch;
+		return this.hw.after(ms, () => {
+			if (epoch === this.epoch) {
+				fn();
+			}
+		});
+	}
 
 	private cancel(id: number | undefined): void {
 		if (id !== undefined) {

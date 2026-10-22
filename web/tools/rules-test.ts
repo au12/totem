@@ -34,6 +34,8 @@ class FakeMachine implements Hardware {
 	setFlippers(e: boolean) { this.flippers = e; }
 	sound(c: SoundCue) { this.sounds.push(c); }
 	ballsOnTable() { return this.balls; }
+	public cleared = 0;
+	clearTable() { this.balls = 0; this.cleared++; }
 
 	/** Runs the clock forward, firing timers in order. */
 	advance(ms: number) {
@@ -277,6 +279,76 @@ function setup(settings: Partial<RulesSettings> = {}, persistent: Partial<Persis
 	rules.abort();
 	hw.advance(5000);
 	check('abort to attract', rules.mode === 'attract' && !hw.flippers);
+}
+
+// Restart before the first ball is served: the old game's serve is dropped.
+{
+	const { hw, rules } = setup();
+	rules.start(1);
+	hw.advance(100);
+	rules.abort();
+	rules.start(1);
+	hw.advance(2000);
+	check('one serve after quick restart', hw.fired.filter(s => s === 'outhole').length === 1 && hw.balls === 1,
+		`${hw.fired.filter(s => s === 'outhole').length} serves, ${hw.balls} balls`);
+}
+
+// Restart with a ball waiting in the shooter lane: the table is cleared and
+// the new game has exactly one ball.
+{
+	const { hw, rules } = setup();
+	rules.start(1);
+	hw.advance(1000);
+	check('ball waiting', hw.balls === 1);
+	rules.abort();
+	check('restart clears the table', hw.balls === 0 && hw.cleared > 0);
+	rules.start(1);
+	hw.advance(1000);
+	check('new game has one ball', hw.balls === 1 && rules.ball === 1, `${hw.balls} balls, ball ${rules.ball}`);
+}
+
+// Launch-and-restart repeatedly can't stack balls.
+{
+	const { hw, rules } = setup();
+	for (let i = 0; i < 5; i++) {
+		rules.start(1);
+		hw.advance(1000);
+		rules.switchClosed(SW.BUMPER); // the ball is in play
+		hw.advance(500);
+		rules.abort();
+	}
+	rules.start(1);
+	hw.advance(1000);
+	check('no ball stacking', hw.balls === 1, `${hw.balls} balls`);
+}
+
+// Restart during the end-of-ball bonus count: none of it reaches the new game.
+{
+	const { hw, rules } = setup();
+	rules.start(1);
+	hw.advance(1000);
+	rules.switchClosed(SW.OUTLANE);
+	rules.switchClosed(SW.OUTLANE); // bonus 10, 3X
+	hw.advance(5000);
+	hw.balls = 0;
+	rules.drained();
+	hw.advance(900); // bonus counting
+	rules.abort();
+	rules.start(1);
+	hw.advance(20000);
+	check('no bonus carried into new game', rules.currentScore === 0, String(rules.currentScore));
+	check('new game still on ball 1', rules.ball === 1 && rules.current === 0, `ball ${rules.ball}`);
+	check('single serve for new game', hw.balls === 1, `${hw.balls} balls`);
+}
+
+// Quit to the menu leaves an empty table in attract mode.
+{
+	const { hw, rules } = setup();
+	rules.start(1);
+	hw.advance(1000);
+	rules.abort();
+	hw.advance(5000);
+	check('quit empties the table', hw.balls === 0 && rules.mode === 'attract');
 }
 
 console.log(`${count - failures}/${count} rule checks passed`);
