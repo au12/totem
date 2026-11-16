@@ -88,6 +88,7 @@ The server keeps a shared high-score list in `/config/scores.json` (the top 25 a
 | `LEADERBOARD` | `true` | Shared high scores |
 | `TRUST_PROXY` | `false` | Use `X-Forwarded-For` for the score rate limit (set behind a reverse proxy) |
 | `LOG_REQUESTS` | `false` | Access log |
+| `ARCADE_URL` | | Address of an [au12 Arcade](https://github.com/au12/arcade) that may show the game and receive its scores |
 
 ### Unraid and Nginx Proxy Manager
 
@@ -123,6 +124,19 @@ cd ../server && WEB_ROOT=../web/dist DATA_DIR=../data STATE_DIR=../config PUID=0
 ```
 
 `npm run watch` rebuilds on change. `node tools/run-ts.mjs tools/play.ts <packDir> 5` plays games headlessly with an autopilot and logs the rules, and `TOTEM_VPX=… TOTEM_B2S=… TOTEM_OUT=… go test` in `server/` runs a conversion.
+
+## In the arcade
+
+Totem can run inside the [au12 Arcade](https://github.com/au12/arcade), the family launcher that puts every game behind one installable app, with shared players and high scores across the games (and a real cabinet, if you build one).
+
+Set `ARCADE_URL` to the arcade's address, for example `https://arcade.example.com`. Then:
+
+- The arcade may show Totem in a frame (the server adds it to `frame-ancestors`) and tells the game who's playing.
+- Each finished game's score goes on the arcade's Totem leaderboard, earns tickets and counts toward achievements. In a game for several players, player 1 is the arcade's player. The high-score name box starts with their name.
+- Opening the arcade's menu (the cabinet's menu button, or F9) pauses the table.
+- Played on its own rather than inside the arcade, the game still sends scores to the arcade for whoever that browser last played as there. It finds the arcade through `/arcade.json`.
+
+Totem's own house leaderboard works as before. With `ARCADE_URL` empty, nothing changes.
 
 ## Credits and license
 

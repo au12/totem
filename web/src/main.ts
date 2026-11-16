@@ -18,6 +18,7 @@ import { Command, Input, keyName } from './ui/input';
 import { formatScore, Scores } from './ui/scores';
 import { ActionId, ACTIONS, DEFAULT_KEYS, Settings } from './ui/settings';
 import { ScoreStrip } from './ui/strip';
+import { arcade } from './arcade';
 import { Logger, Progress } from './vpx/util/logger';
 
 declare const __BUILD__: { version: string };
@@ -364,6 +365,7 @@ class App {
 		if (!this.session) {
 			return;
 		}
+		arcade.status('paused');
 		const v = this.session.rules.view;
 		const who = v.players.length > 1 ? `Player ${v.current + 1}, ball` : 'Ball';
 		$('#pause-score').textContent = v.mode === 'game' ? `${who} ${v.ball} of ${this.session.rules.settings.ballsPerGame}, score ${formatScore(v.players[v.current] || 0)}` : '';
@@ -393,6 +395,8 @@ class App {
 			this.submitEntry();
 		});
 		this.buildSettings();
+		// The arcade's menu pauses the table, like switching apps does.
+		arcade.on('pause', () => this.autoPause());
 		window.addEventListener('keydown', e => {
 			if (this.state === 'home' && (e.code === 'Digit1' || e.code === 'KeyS') && !(e.target as HTMLElement).closest('input')) {
 				e.preventDefault();
@@ -460,6 +464,7 @@ class App {
 		this.session.resume();
 		rules.start(players);
 		this.setState('playing');
+		arcade.status('playing');
 		if (!this.settings.get('player.seenHelp')) {
 			this.settings.set('player.seenHelp', true);
 			this.callout(this.isTouch ? 'Tap left or right to flip' : 'Shift keys flip, Space launches');
@@ -473,6 +478,11 @@ class App {
 
 	private onGameOver(scores: number[], hstdBeaten: boolean): void {
 		this.lastGameScores = scores;
+		// Player 1 is whoever the arcade says is playing.
+		arcade.status('over');
+		if (scores[0] > 0) {
+			void arcade.score(scores[0], { meta: { players: scores.length, balls: this.session?.rules.settings.ballsPerGame, hstd: hstdBeaten } });
+		}
 		this.backglass.setBlink(-1, false);
 		this.strip.players = scores.length;
 		setTimeout(() => this.showGameOver(scores, hstdBeaten), 600);
@@ -516,7 +526,7 @@ class App {
 			? `High score for player ${e.player + 1}: ${formatScore(e.score)}`
 			: `New high score: ${formatScore(e.score)}`;
 		const input = $<HTMLInputElement>('#over-name');
-		input.value = this.settings.get('player.name') || '';
+		input.value = (e.player === 0 && arcade.player?.name) || this.settings.get('player.name') || '';
 		if (!this.isTouch) {
 			setTimeout(() => input.focus(), 60);
 		}
